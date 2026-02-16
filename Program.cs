@@ -25,9 +25,31 @@ string player = states[0];
 int food = 0;
 
 InitializeGame();
-while (!shouldExit) 
+
+while (!shouldExit)
 {
-    Move();
+    if(TerminalResized())
+    {
+        Console.Clear();
+        Console.WriteLine("Terminal was resized. Program exiting");
+        shouldExit = true;
+    }
+
+    if(ShouldPlayerFreeze())
+    {
+        FreezePlayer();
+    }
+    
+    if(ShouldSpeedIncrease())
+        Move(true, 3);
+    else
+        Move(true);
+
+    if(HasConsumedFood())
+    {
+        ChangePlayer();
+        ShowFood();
+    }
 }
 
 // Returns true if the Terminal was resized 
@@ -63,11 +85,16 @@ void ChangePlayer()
 void FreezePlayer() 
 {
     System.Threading.Thread.Sleep(1000);
+
+    // To ignore any key inputs while the player is frozen
+    while (Console.KeyAvailable)
+        Console.ReadKey(true);
+
     player = states[0];
 }
 
 // Reads directional input from the Console and moves the player
-void Move() 
+void Move(bool otherKeysPressed = false, int hSpeed = 1)
 {
     int lastX = playerX;
     int lastY = playerY;
@@ -81,13 +108,16 @@ void Move()
             playerY++; 
             break;
 		case ConsoleKey.LeftArrow:  
-            playerX--; 
+            playerX-= hSpeed; 
             break;
 		case ConsoleKey.RightArrow: 
-            playerX++; 
+            playerX+= hSpeed; 
             break;
 		case ConsoleKey.Escape:     
             shouldExit = true; 
+            break;
+        default:
+            shouldExit = otherKeysPressed;
             break;
     }
 
@@ -114,4 +144,22 @@ void InitializeGame()
     ShowFood();
     Console.SetCursorPosition(0, 0);
     Console.Write(player);
+}
+
+// To check if the player has consumed food (same coords)
+bool HasConsumedFood()
+{
+    return playerX == foodX && playerY == foodY;
+}
+
+// To check is the player should freeze
+bool ShouldPlayerFreeze()
+{
+    return player == states[2];
+}
+
+// To check if horizontal speed should increase
+bool ShouldSpeedIncrease()
+{
+    return player == states[1];
 }
